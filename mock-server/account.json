@@ -1,0 +1,6 @@
+{
+  "id": "mock-account",
+  "name": "Demo User",
+  "email": "demo-user@example.com",
+  "description": "Identity used by the mock email server for sent mail and drafts."
+}

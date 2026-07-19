@@ -1,0 +1,22 @@
+{
+  "id": "archive",
+  "name": "Archive",
+  "role": "archive",
+  "sortOrder": 4,
+  "emails": [
+    {
+      "id": "eml-4001",
+      "mailboxId": "archive",
+      "from": [{ "name": "Acme Corp Accounts", "email": "no-reply@example.com" }],
+      "to": [{ "name": "Demo User", "email": "demo-user@example.com" }],
+      "subject": "Password reset confirmation",
+      "receivedAt": "2026-06-28T19:15:00Z",
+      "preview": "Your password was changed successfully. If this wasn't you, contact support immediately.",
+      "keywords": { "$seen": true },
+      "hasAttachment": false,
+      "bodyValues": {
+        "text": "Your password was changed successfully on June 28.\n\nIf this wasn't you, contact support@example.com immediately.\n\nAcme Corp Accounts"
+      }
+    }
+  ]
+}

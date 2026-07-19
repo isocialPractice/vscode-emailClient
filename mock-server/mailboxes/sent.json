@@ -1,0 +1,40 @@
+{
+  "id": "sent",
+  "name": "Sent",
+  "role": "sent",
+  "sortOrder": 2,
+  "emails": [
+    {
+      "id": "eml-2001",
+      "threadId": "thr-kickoff",
+      "mailboxId": "sent",
+      "from": [{ "name": "Demo User", "email": "demo-user@example.com" }],
+      "to": [
+        { "name": "John Smith", "email": "john.smith@example.com" },
+        { "name": "Alice", "email": "alice@example.com" }
+      ],
+      "subject": "Re: Project kickoff notes",
+      "receivedAt": "2026-07-16T11:05:00Z",
+      "preview": "Thanks John - notes look complete. I'll bring the milestone draft to Tuesday's sync.",
+      "keywords": { "$seen": true },
+      "hasAttachment": false,
+      "bodyValues": {
+        "text": "Thanks John - notes look complete. I'll bring the milestone draft to Tuesday's sync.\n\nDemo"
+      }
+    },
+    {
+      "id": "eml-2002",
+      "mailboxId": "sent",
+      "from": [{ "name": "Demo User", "email": "demo-user@example.com" }],
+      "to": [{ "name": "Jane Doe", "email": "jane.doe@example.com" }],
+      "subject": "Onboarding checklist - badge photo",
+      "receivedAt": "2026-07-15T13:22:00Z",
+      "preview": "Hi Jane, quick question about the badge photo: is a phone picture acceptable?",
+      "keywords": { "$seen": true },
+      "hasAttachment": false,
+      "bodyValues": {
+        "text": "Hi Jane,\n\nQuick question about the badge photo on the checklist: is a phone picture acceptable, or does it need to be taken at the front desk?\n\nThanks,\nDemo"
+      }
+    }
+  ]
+}

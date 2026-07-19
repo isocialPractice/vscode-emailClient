@@ -1,0 +1,22 @@
+{
+  "id": "trash",
+  "name": "Trash",
+  "role": "trash",
+  "sortOrder": 5,
+  "emails": [
+    {
+      "id": "eml-5001",
+      "mailboxId": "trash",
+      "from": [{ "name": "Events at Contoso", "email": "events@example.com" }],
+      "to": [{ "name": "Demo User", "email": "demo-user@example.com" }],
+      "subject": "Expired: webinar invitation",
+      "receivedAt": "2026-07-10T08:00:00Z",
+      "preview": "Registration for the June webinar has closed. Recordings will be shared with attendees.",
+      "keywords": { "$seen": true },
+      "hasAttachment": false,
+      "bodyValues": {
+        "text": "Registration for the June webinar has closed. Recordings will be shared with attendees.\n\nEvents at Contoso"
+      }
+    }
+  ]
+}

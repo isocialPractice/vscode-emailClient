@@ -1,0 +1,123 @@
+{
+  "id": "inbox",
+  "name": "Inbox",
+  "role": "inbox",
+  "sortOrder": 1,
+  "emails": [
+    {
+      "id": "eml-1001",
+      "threadId": "thr-onboarding",
+      "mailboxId": "inbox",
+      "from": [{ "name": "Jane Doe", "email": "jane.doe@example.com" }],
+      "to": [{ "name": "Demo User", "email": "demo-user@example.com" }],
+      "subject": "Welcome to Acme Corp - your onboarding checklist",
+      "receivedAt": "2026-07-18T08:12:00Z",
+      "preview": "Hi Demo, welcome aboard! Here is everything you need for your first week at Acme Corp.",
+      "keywords": { "$seen": false },
+      "hasAttachment": false,
+      "bodyValues": {
+        "html": "<div style=\"font-family:sans-serif;max-width:560px\"><h2 style=\"color:#1f2328\">Welcome to Acme Corp!</h2><p>Hi Demo,</p><p>Welcome aboard! Here is everything you need for your first week:</p><ul><li>Set up your workstation and badge</li><li>Meet your onboarding buddy, <strong>John Smith</strong></li><li>Review the team handbook</li></ul><p>If anything is unclear, just reply to this email.</p><p>Best,<br>Jane Doe<br><span style=\"color:#6c757d\">People Operations, Acme Corp</span></p></div>"
+      }
+    },
+    {
+      "id": "eml-1002",
+      "mailboxId": "inbox",
+      "from": [{ "name": "Acme Corp Billing", "email": "billing@example.com" }],
+      "to": [{ "name": "Demo User", "email": "demo-user@example.com" }],
+      "subject": "Your July billing statement is ready",
+      "receivedAt": "2026-07-17T14:03:00Z",
+      "preview": "Your billing statement for July is attached. Amount due: $42.00 by August 1.",
+      "keywords": { "$seen": false, "$flagged": true },
+      "hasAttachment": true,
+      "attachments": [
+        {
+          "id": "att-2001",
+          "name": "billing-statement-july.pdf",
+          "type": "application/pdf",
+          "size": 48213
+        }
+      ],
+      "bodyValues": {
+        "text": "Hello Demo User,\n\nYour billing statement for July is attached.\n\nAmount due: $42.00\nDue date: August 1\n\nQuestions? Contact billing@example.com.\n\nAcme Corp Billing"
+      }
+    },
+    {
+      "id": "eml-1003",
+      "threadId": "thr-kickoff",
+      "mailboxId": "inbox",
+      "from": [{ "name": "John Smith", "email": "john.smith@example.com" }],
+      "to": [
+        { "name": "Demo User", "email": "demo-user@example.com" },
+        { "name": "Alice", "email": "alice@example.com" }
+      ],
+      "subject": "Project kickoff notes",
+      "receivedAt": "2026-07-16T10:30:00Z",
+      "preview": "Notes from this morning's kickoff: scope agreed, milestones drafted, next sync on Tuesday.",
+      "keywords": { "$seen": true, "$answered": true },
+      "hasAttachment": false,
+      "bodyValues": {
+        "text": "Hi both,\n\nNotes from this morning's kickoff:\n\n- Scope agreed for phase one\n- Milestones drafted (see project board)\n- Next sync on Tuesday at 10:00\n\nPlease add anything I missed.\n\nJohn"
+      }
+    },
+    {
+      "id": "eml-1004",
+      "threadId": "thr-kickoff",
+      "mailboxId": "inbox",
+      "from": [{ "name": "Bob", "email": "bob@example.com" }],
+      "to": [
+        { "name": "Demo User", "email": "demo-user@example.com" },
+        { "name": "John Smith", "email": "john.smith@example.com" }
+      ],
+      "subject": "Re: Project kickoff notes",
+      "receivedAt": "2026-07-16T15:47:00Z",
+      "preview": "One addition: we still need a decision on the reporting format before Tuesday.",
+      "keywords": { "$seen": false },
+      "hasAttachment": false,
+      "bodyValues": {
+        "text": "One addition: we still need a decision on the reporting format before Tuesday.\n\nI'd vote for the columnar layout we tested last sprint.\n\nBob"
+      }
+    },
+    {
+      "id": "eml-1005",
+      "mailboxId": "inbox",
+      "from": [{ "name": "Northwind Traders", "email": "newsletter@example.org" }],
+      "to": [{ "name": "Demo User", "email": "demo-user@example.com" }],
+      "subject": "Northwind Monthly - new arrivals and summer picks",
+      "receivedAt": "2026-07-15T09:00:00Z",
+      "preview": "This month at Northwind Traders: new arrivals, summer picks, and a look behind the scenes.",
+      "keywords": { "$seen": true },
+      "hasAttachment": false,
+      "bodyValues": {
+        "html": "<div style=\"font-family:sans-serif;max-width:560px;background:#f5f7fa;padding:16px\"><h2 style=\"color:#1f2328;margin-top:0\">Northwind Monthly</h2><p style=\"color:#4d4d4d\">This month at Northwind Traders:</p><table style=\"width:100%;border-collapse:collapse\"><tr><td style=\"padding:8px;border:1px solid #d4dbe3\"><strong>New arrivals</strong><br>Fresh stock in every category.</td></tr><tr><td style=\"padding:8px;border:1px solid #d4dbe3\"><strong>Summer picks</strong><br>Our staff favorites for the season.</td></tr><tr><td style=\"padding:8px;border:1px solid #d4dbe3\"><strong>Behind the scenes</strong><br>How orders get from warehouse to doorstep.</td></tr></table><p style=\"color:#6c757d;font-size:12px\">You are receiving this because you subscribed at example.org. Unsubscribe any time.</p></div>"
+      }
+    },
+    {
+      "id": "eml-1006",
+      "mailboxId": "inbox",
+      "from": [{ "name": "Alice", "email": "alice@example.com" }],
+      "to": [{ "name": "Demo User", "email": "demo-user@example.com" }],
+      "subject": "Lunch on Friday?",
+      "receivedAt": "2026-07-14T12:21:00Z",
+      "preview": "A few of us are trying the new place on Main Street on Friday. Want to join?",
+      "keywords": { "$seen": true },
+      "hasAttachment": false,
+      "bodyValues": {
+        "text": "A few of us are trying the new place on Main Street on Friday. Want to join?\n\nAlice"
+      }
+    },
+    {
+      "id": "eml-1007",
+      "mailboxId": "inbox",
+      "from": [{ "name": "Contoso Support", "email": "support@example.com" }],
+      "to": [{ "name": "Demo User", "email": "demo-user@example.com" }],
+      "subject": "Your support ticket #4821 has been updated",
+      "receivedAt": "2026-07-13T16:40:00Z",
+      "preview": "An agent replied to your ticket #4821 (sync issue). View the reply to continue the conversation.",
+      "keywords": { "$seen": true },
+      "hasAttachment": false,
+      "bodyValues": {
+        "text": "Hello Demo User,\n\nAn agent replied to your ticket #4821 (sync issue):\n\n\"Thanks for the logs. The fix ships in next week's release. We'll follow up when it is live.\"\n\nReply to this email to continue the conversation.\n\nContoso Support"
+      }
+    }
+  ]
+}

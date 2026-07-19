@@ -1,0 +1,9 @@
+export const account = {
+  host: 'smtp.example.com',
+  port: 587,
+  secure: false, // false = STARTTLS (587), true = TLS (465)
+  auth: {
+    user: 'jane.doe@example.com',   // your email address
+    pass: 'app-password-here',      // your password or app password
+  },
+};

@@ -1,0 +1,201 @@
+{
+  "name": "vscode-email-client",
+  "displayName": "Email Client",
+  "description": "Read, preview, compose, and send email inside VS Code. Unifies an IMAP extraction engine and an SMTP sending engine behind a three-pane mail UI, with a built-in mock email server for UI preview, testing, and debugging.",
+  "version": "0.0.0-alpha",
+  "author": "John Haugabook",
+  "publisher": "isocialPractice",
+  "icon": "icon.png",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/isocialPractice/vscode-emailClient.git"
+  },
+  "engines": {
+    "vscode": "^1.90.0",
+    "node": ">=18.0.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "email",
+    "imap",
+    "smtp",
+    "mail",
+    "client"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      {
+        "command": "emailClient.open",
+        "category": "Email Client",
+        "title": "Open"
+      },
+      {
+        "command": "emailClient.compose",
+        "category": "Email Client",
+        "title": "Compose Email"
+      },
+      {
+        "command": "emailClient.refresh",
+        "category": "Email Client",
+        "title": "Refresh Mailboxes"
+      },
+      {
+        "command": "emailClient.switchBackend",
+        "category": "Email Client",
+        "title": "Switch Backend (Mock / Live)"
+      },
+      {
+        "command": "emailClient.selectAccount",
+        "category": "Email Client",
+        "title": "Select Account"
+      },
+      {
+        "command": "emailClient.createAccountFile",
+        "category": "Email Client",
+        "title": "Create Account File"
+      },
+      {
+        "command": "emailClient.manageAccounts",
+        "category": "Email Client",
+        "title": "Manage Accounts"
+      },
+      {
+        "command": "emailClient.openMockData",
+        "category": "Email Client",
+        "title": "Open Mock Server Data Folder"
+      },
+      {
+        "command": "emailClient.resetMockData",
+        "category": "Email Client",
+        "title": "Reset Mock Server Data"
+      }
+    ],
+    "configuration": {
+      "title": "Email Client",
+      "properties": {
+        "emailClient.accountsRoot": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to the folder holding the account registry (accounts/, extract-email/accounts/, send-email/config/accounts/). Leave empty to search each workspace folder and the extension's own folder."
+        },
+        "emailClient.activeAccount": {
+          "type": "string",
+          "default": "",
+          "description": "Id of the account profile to use. Empty uses the flat emailClient.* settings. Pick interactively with the \"Email Client: Select Account\" command."
+        },
+        "emailClient.accounts": {
+          "type": "array",
+          "default": [],
+          "markdownDescription": "Account profiles. Each entry bundles a backend with its configuration. Accounts can also be defined as JSON files in `settings/accounts/` inside a workspace folder (the file name is the account id); folder files override settings entries with the same id.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique account id."
+              },
+              "name": {
+                "type": "string",
+                "description": "Display name."
+              },
+              "email": {
+                "type": "string",
+                "description": "Identity address; the mock backend sends from it."
+              },
+              "backend": {
+                "type": "string",
+                "enum": [
+                  "mock",
+                  "live"
+                ],
+                "default": "mock",
+                "description": "Backend this account uses."
+              },
+              "mockDataPath": {
+                "type": "string",
+                "description": "Mock backend: data folder (empty uses the per-user default)."
+              },
+              "extractEmailPath": {
+                "type": "string",
+                "description": "Live backend: local extract-email installation."
+              },
+              "sendEmailPath": {
+                "type": "string",
+                "description": "Live backend: local send-email installation."
+              },
+              "toolAccount": {
+                "type": "string",
+                "description": "Account name inside the extract-email / send-email tools."
+              },
+              "messageLimit": {
+                "type": "number",
+                "description": "Messages loaded per mailbox for this account."
+              }
+            }
+          }
+        },
+        "emailClient.backend": {
+          "type": "string",
+          "enum": [
+            "mock",
+            "live"
+          ],
+          "enumDescriptions": [
+            "Built-in mock email server backed by local JSON mailbox data. No network access.",
+            "Live mode: fetch mail through the extract-email CLI and send through the send-email engine."
+          ],
+          "default": "mock",
+          "description": "Which email backend to use."
+        },
+        "emailClient.mockDataPath": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to a mock server data folder. Leave empty to use a writable copy of the bundled sample data."
+        },
+        "emailClient.sendEmailPath": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to a local send-email installation (folder containing its package.json). Required for sending in live mode."
+        },
+        "emailClient.extractEmailPath": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to a local extract-email installation (folder containing its package.json). Required for fetching in live mode."
+        },
+        "emailClient.account": {
+          "type": "string",
+          "default": "",
+          "description": "Account name to pass to the live backends (an account configured inside the send-email / extract-email tools). Leave empty to use each tool's default account."
+        },
+        "emailClient.messageLimit": {
+          "type": "number",
+          "default": 50,
+          "minimum": 1,
+          "maximum": 500,
+          "description": "Maximum number of messages to load per mailbox."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "pretest": "npm run build",
+    "test": "node --test dist/test/address.test.js dist/test/sanitizeHtml.test.js dist/test/mockEmailServer.test.js dist/test/accountManager.test.js dist/test/liveBackend.test.js dist/test/accountConfig.test.js dist/test/accountStore.test.js",
+    "pre:publish": "vsce package",
+    "vscode:prepublish": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.0",
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.4.0"
+  }
+}

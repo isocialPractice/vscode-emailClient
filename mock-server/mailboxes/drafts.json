@@ -1,0 +1,22 @@
+{
+  "id": "drafts",
+  "name": "Drafts",
+  "role": "drafts",
+  "sortOrder": 3,
+  "emails": [
+    {
+      "id": "eml-3001",
+      "mailboxId": "drafts",
+      "from": [{ "name": "Demo User", "email": "demo-user@example.com" }],
+      "to": [{ "name": "John Smith", "email": "john.smith@example.com" }],
+      "subject": "Quarterly budget questions",
+      "receivedAt": "2026-07-17T18:02:00Z",
+      "preview": "Hi John, before Tuesday I wanted to run two budget questions past you…",
+      "keywords": { "$seen": true, "$draft": true },
+      "hasAttachment": false,
+      "bodyValues": {
+        "text": "Hi John,\n\nBefore Tuesday I wanted to run two budget questions past you:\n\n1. Does the phase-one estimate include the reporting work?\n2. "
+      }
+    }
+  ]
+}

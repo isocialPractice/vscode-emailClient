@@ -1,0 +1,380 @@
+/*
+ * Manage Accounts webview styles.
+ *
+ * Colors come from VS Code theme tokens so the panel follows the user's
+ * theme. Spacing uses a 4/8px grid with a single 4px radius scale; hot
+ * color appears only on destructive actions and errors.
+ */
+
+:root {
+  --ec-gap: 8px;
+  --ec-radius: 4px;
+  --ec-bg: var(--vscode-editor-background, #f5f7fa);
+  --ec-fg: var(--vscode-editor-foreground, #1f2328);
+  --ec-muted: var(--vscode-descriptionForeground, #6c757d);
+  --ec-border: var(--vscode-panel-border, #d4dbe3);
+  --ec-accent: var(--vscode-button-background, #2b6cb0);
+  --ec-accent-fg: var(--vscode-button-foreground, #f0f2f3);
+  --ec-hover: var(--vscode-list-hoverBackground, #e6f2ff);
+  --ec-error: var(--vscode-errorForeground, #b42318);
+  --ec-input-bg: var(--vscode-input-background, #ffffff);
+  --ec-input-fg: var(--vscode-input-foreground, #1f2328);
+  --ec-input-border: var(--vscode-input-border, #c4ccd4);
+  --ec-focus: var(--vscode-focusBorder, #2b6cb0);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ec-bg);
+  color: var(--ec-fg);
+  font-family: var(--vscode-font-family, "Segoe UI", sans-serif);
+  font-size: var(--vscode-font-size, 13px);
+}
+
+.loading,
+.empty {
+  padding: 24px;
+  color: var(--ec-muted);
+}
+
+button {
+  font: inherit;
+  border-radius: var(--ec-radius);
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 4px 10px;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--ec-focus);
+  outline-offset: 1px;
+}
+
+.btn-primary {
+  background: var(--ec-accent);
+  color: var(--ec-accent-fg);
+  padding: 5px 14px;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.08);
+}
+
+.btn-secondary {
+  border-color: var(--ec-border);
+}
+
+.btn-secondary:hover {
+  background: var(--ec-hover);
+}
+
+.btn-danger {
+  color: var(--ec-error);
+  border-color: var(--ec-border);
+}
+
+.btn-danger:hover {
+  background: var(--ec-hover);
+}
+
+/* ── Header ───────────────────────────────────────────────────────────── */
+
+.page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: calc(var(--ec-gap) * 3);
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: var(--ec-gap);
+  margin-bottom: var(--ec-gap);
+}
+
+h1 {
+  font-size: 1.4em;
+  margin: 0;
+  flex: 1;
+}
+
+.subtitle {
+  color: var(--ec-muted);
+  margin: 0 0 calc(var(--ec-gap) * 2);
+}
+
+/* ── Account list ─────────────────────────────────────────────────────── */
+
+.account-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ec-gap);
+}
+
+.account-card {
+  border: 1px solid var(--ec-border);
+  border-radius: var(--ec-radius);
+  padding: calc(var(--ec-gap) * 1.5);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ec-gap);
+  flex-wrap: wrap;
+}
+
+.account-main {
+  flex: 1;
+  min-width: 220px;
+}
+
+.account-title {
+  display: flex;
+  align-items: center;
+  gap: var(--ec-gap);
+  flex-wrap: wrap;
+}
+
+.account-name {
+  font-weight: 600;
+  font-size: 1.05em;
+}
+
+.badge {
+  border: 1px solid var(--ec-border);
+  border-radius: 999px;
+  padding: 1px 9px;
+  font-size: 0.85em;
+  color: var(--ec-muted);
+}
+
+.badge-active {
+  background: var(--ec-accent);
+  color: var(--ec-accent-fg);
+  border-color: transparent;
+}
+
+.badge-native {
+  border-style: dashed;
+}
+
+.account-email {
+  color: var(--ec-muted);
+  margin-top: 2px;
+}
+
+.account-files {
+  color: var(--ec-muted);
+  font-size: 0.88em;
+  margin-top: 4px;
+  word-break: break-all;
+}
+
+.account-actions {
+  display: flex;
+  gap: var(--ec-gap);
+  align-items: flex-start;
+}
+
+/* ── Empty state and diagnostics ──────────────────────────────────────── */
+
+.empty-panel {
+  border: 1px dashed var(--ec-border);
+  border-radius: var(--ec-radius);
+  padding: calc(var(--ec-gap) * 3);
+  text-align: center;
+  color: var(--ec-muted);
+}
+
+.roots {
+  margin-top: calc(var(--ec-gap) * 2);
+  text-align: left;
+  font-size: 0.9em;
+}
+
+.roots code {
+  word-break: break-all;
+}
+
+.roots ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+.warnings {
+  margin-top: calc(var(--ec-gap) * 2);
+  border-left: 3px solid var(--ec-error);
+  background: var(--ec-input-bg);
+  border-radius: var(--ec-radius);
+  padding: var(--ec-gap) calc(var(--ec-gap) * 1.5);
+}
+
+.warnings ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+/* ── Editor form ──────────────────────────────────────────────────────── */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 30, 40, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ec-gap);
+  z-index: 10;
+}
+
+.dialog {
+  background: var(--ec-bg);
+  border: 1px solid var(--ec-border);
+  border-radius: var(--ec-radius);
+  width: min(620px, 96vw);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 28px rgba(15, 30, 45, 0.25);
+}
+
+.dialog-header {
+  padding: var(--ec-gap) calc(var(--ec-gap) * 2);
+  border-bottom: 1px solid var(--ec-border);
+  font-weight: 600;
+}
+
+.dialog-body {
+  padding: calc(var(--ec-gap) * 2);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--ec-gap) * 1.5);
+}
+
+.dialog-footer {
+  display: flex;
+  gap: var(--ec-gap);
+  padding: var(--ec-gap) calc(var(--ec-gap) * 2);
+  border-top: 1px solid var(--ec-border);
+}
+
+.dialog-footer .spacer {
+  flex: 1;
+}
+
+fieldset {
+  border: 1px solid var(--ec-border);
+  border-radius: var(--ec-radius);
+  padding: var(--ec-gap) calc(var(--ec-gap) * 1.5) calc(var(--ec-gap) * 1.5);
+  margin: 0;
+}
+
+legend {
+  padding: 0 6px;
+  color: var(--ec-muted);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: var(--ec-gap);
+}
+
+.field label {
+  color: var(--ec-muted);
+  font-size: 0.92em;
+}
+
+.field input[type="text"],
+.field input[type="password"],
+.field input[type="number"],
+.field select {
+  background: var(--ec-input-bg);
+  color: var(--ec-input-fg);
+  border: 1px solid var(--ec-input-border);
+  border-radius: var(--ec-radius);
+  padding: 6px 8px;
+  font: inherit;
+}
+
+.field-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--ec-gap);
+}
+
+.field-row {
+  display: flex;
+  gap: var(--ec-gap);
+  flex-wrap: wrap;
+}
+
+.field-row .field {
+  flex: 1;
+  min-width: 140px;
+}
+
+.hint {
+  color: var(--ec-muted);
+  font-size: 0.88em;
+}
+
+/* ── Toasts ───────────────────────────────────────────────────────────── */
+
+.toast-region {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ec-gap);
+  z-index: 20;
+}
+
+.toast {
+  background: var(--ec-input-bg);
+  border: 1px solid var(--ec-border);
+  border-left: 3px solid var(--ec-accent);
+  border-radius: var(--ec-radius);
+  padding: var(--ec-gap) calc(var(--ec-gap) * 2);
+  max-width: 360px;
+  box-shadow: 0 4px 14px rgba(15, 30, 45, 0.18);
+  animation: toast-in 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toast.error {
+  border-left-color: var(--ec-error);
+}
+
+.toast.warn {
+  border-left-color: var(--vscode-editorWarning-foreground, #8a6d00);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}

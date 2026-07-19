@@ -1,0 +1,490 @@
+/*
+ * Email client webview styles.
+ *
+ * Colors come from VS Code theme tokens so the UI follows the user's theme
+ * in both light and dark modes. Fallback values keep to a cool, light
+ * palette; hot colors appear only on destructive and error affordances.
+ * Spacing sits on a 4/8px grid with a single 4px radius scale.
+ */
+
+:root {
+  --ec-gap: 8px;
+  --ec-radius: 4px;
+  --ec-bg: var(--vscode-editor-background, #f5f7fa);
+  --ec-fg: var(--vscode-editor-foreground, #1f2328);
+  --ec-muted: var(--vscode-descriptionForeground, #6c757d);
+  --ec-border: var(--vscode-panel-border, #d4dbe3);
+  --ec-accent: var(--vscode-button-background, #2b6cb0);
+  --ec-accent-fg: var(--vscode-button-foreground, #f0f2f3);
+  --ec-hover: var(--vscode-list-hoverBackground, #e6f2ff);
+  --ec-selected: var(--vscode-list-activeSelectionBackground, #cfe3f7);
+  --ec-selected-fg: var(--vscode-list-activeSelectionForeground, #1f2328);
+  --ec-error: var(--vscode-errorForeground, #b42318);
+  --ec-input-bg: var(--vscode-input-background, #ffffff);
+  --ec-input-fg: var(--vscode-input-foreground, #1f2328);
+  --ec-input-border: var(--vscode-input-border, #c4ccd4);
+  --ec-focus: var(--vscode-focusBorder, #2b6cb0);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--ec-bg);
+  color: var(--ec-fg);
+  font-family: var(--vscode-font-family, "Segoe UI", sans-serif);
+  font-size: var(--vscode-font-size, 13px);
+}
+
+#app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#loading {
+  padding: 24px;
+  color: var(--ec-muted);
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  border-radius: var(--ec-radius);
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--ec-focus);
+  outline-offset: 1px;
+}
+
+/* ── Toolbar ──────────────────────────────────────────────────────────── */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--ec-gap);
+  padding: var(--ec-gap) calc(var(--ec-gap) * 2);
+  border-bottom: 1px solid var(--ec-border);
+  flex: 0 0 auto;
+}
+
+.toolbar .spacer {
+  flex: 1;
+}
+
+.btn-primary {
+  background: var(--ec-accent);
+  color: var(--ec-accent-fg);
+  padding: 5px 14px;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.08);
+}
+
+.btn-secondary {
+  border-color: var(--ec-border);
+}
+
+.btn-secondary:hover {
+  background: var(--ec-hover);
+}
+
+.backend-badge {
+  color: var(--ec-muted);
+  border: 1px solid var(--ec-border);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.9em;
+}
+
+.search {
+  background: var(--ec-input-bg);
+  color: var(--ec-input-fg);
+  border: 1px solid var(--ec-input-border);
+  border-radius: var(--ec-radius);
+  padding: 4px 8px;
+  min-width: 180px;
+}
+
+/* ── Three-pane layout ────────────────────────────────────────────────── */
+
+.layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 180px 320px 1fr;
+  min-height: 0;
+}
+
+.pane {
+  min-height: 0;
+  overflow-y: auto;
+  border-right: 1px solid var(--ec-border);
+}
+
+.pane:last-child {
+  border-right: none;
+}
+
+/* Sidebar */
+
+.mailbox-list {
+  list-style: none;
+  margin: 0;
+  padding: var(--ec-gap) 0;
+}
+
+.mailbox-item button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--ec-gap);
+  padding: 6px calc(var(--ec-gap) * 2);
+  text-align: left;
+  border-radius: 0;
+}
+
+.mailbox-item button:hover {
+  background: var(--ec-hover);
+}
+
+.mailbox-item.active button {
+  background: var(--ec-selected);
+  color: var(--ec-selected-fg);
+  font-weight: 600;
+}
+
+.mailbox-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.unread-pill {
+  background: var(--ec-accent);
+  color: var(--ec-accent-fg);
+  border-radius: 999px;
+  font-size: 0.85em;
+  padding: 0 7px;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* Message list */
+
+.message-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.message-row button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: var(--ec-gap) calc(var(--ec-gap) * 2);
+  border-bottom: 1px solid var(--ec-border);
+  border-radius: 0;
+}
+
+.message-row button:hover {
+  background: var(--ec-hover);
+}
+
+.message-row.selected button {
+  background: var(--ec-selected);
+  color: var(--ec-selected-fg);
+}
+
+.row-top {
+  display: flex;
+  gap: var(--ec-gap);
+  align-items: baseline;
+}
+
+.row-from {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.message-row.unread .row-from,
+.message-row.unread .row-subject {
+  font-weight: 700;
+}
+
+.row-date {
+  color: var(--ec-muted);
+  font-size: 0.9em;
+  flex: 0 0 auto;
+}
+
+.row-subject {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+.row-preview {
+  color: var(--ec-muted);
+  font-size: 0.92em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+.flag-dot,
+.clip {
+  flex: 0 0 auto;
+  font-size: 0.9em;
+}
+
+.flag-dot {
+  color: var(--ec-accent);
+}
+
+.empty-state {
+  padding: 24px;
+  color: var(--ec-muted);
+  text-align: center;
+}
+
+/* Reading pane */
+
+.reader {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.reader-header {
+  padding: calc(var(--ec-gap) * 2);
+  border-bottom: 1px solid var(--ec-border);
+  flex: 0 0 auto;
+}
+
+.reader-subject {
+  margin: 0 0 var(--ec-gap);
+  font-size: 1.25em;
+  font-weight: 600;
+}
+
+.reader-meta {
+  color: var(--ec-muted);
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+
+.reader-actions {
+  display: flex;
+  gap: var(--ec-gap);
+  margin-top: var(--ec-gap);
+  flex-wrap: wrap;
+}
+
+.btn-danger {
+  color: var(--ec-error);
+  border-color: var(--ec-border);
+}
+
+.btn-danger:hover {
+  background: var(--ec-hover);
+}
+
+.attachment-chips {
+  display: flex;
+  gap: var(--ec-gap);
+  flex-wrap: wrap;
+  margin-top: var(--ec-gap);
+}
+
+.attachment-chip {
+  border: 1px solid var(--ec-border);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.9em;
+  color: var(--ec-muted);
+}
+
+.reader-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: calc(var(--ec-gap) * 2);
+  line-height: 1.5;
+}
+
+.reader-body img {
+  max-width: 100%;
+}
+
+.reader-body .plain-body {
+  font-family: inherit;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+/* ── Compose dialog ───────────────────────────────────────────────────── */
+
+.compose-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 30, 40, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.compose {
+  background: var(--ec-bg);
+  border: 1px solid var(--ec-border);
+  border-radius: var(--ec-radius);
+  width: min(680px, 92vw);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 28px rgba(15, 30, 45, 0.25);
+}
+
+.compose-header {
+  display: flex;
+  align-items: center;
+  padding: var(--ec-gap) calc(var(--ec-gap) * 2);
+  border-bottom: 1px solid var(--ec-border);
+  font-weight: 600;
+}
+
+.compose-body {
+  padding: calc(var(--ec-gap) * 2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ec-gap);
+  overflow-y: auto;
+}
+
+.compose-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.compose-field label {
+  color: var(--ec-muted);
+  font-size: 0.92em;
+}
+
+.compose-field input,
+.compose-field textarea {
+  background: var(--ec-input-bg);
+  color: var(--ec-input-fg);
+  border: 1px solid var(--ec-input-border);
+  border-radius: var(--ec-radius);
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.compose-field textarea {
+  min-height: 160px;
+  resize: vertical;
+}
+
+.compose-footer {
+  display: flex;
+  gap: var(--ec-gap);
+  padding: var(--ec-gap) calc(var(--ec-gap) * 2);
+  border-top: 1px solid var(--ec-border);
+}
+
+.compose-footer .spacer {
+  flex: 1;
+}
+
+/* ── Toast notices ────────────────────────────────────────────────────── */
+
+.toast-region {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ec-gap);
+  z-index: 20;
+}
+
+.toast {
+  background: var(--ec-input-bg);
+  color: var(--ec-fg);
+  border: 1px solid var(--ec-border);
+  border-left: 3px solid var(--ec-accent);
+  border-radius: var(--ec-radius);
+  padding: var(--ec-gap) calc(var(--ec-gap) * 2);
+  max-width: 360px;
+  box-shadow: 0 4px 14px rgba(15, 30, 45, 0.18);
+  animation: toast-in 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toast.error {
+  border-left-color: var(--ec-error);
+}
+
+.toast.warn {
+  border-left-color: var(--vscode-editorWarning-foreground, #8a6d00);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}
+
+/* Narrow panels collapse to two panes: the reader overlays the list. */
+@media (max-width: 700px) {
+  .layout {
+    grid-template-columns: 140px 1fr;
+  }
+
+  .pane-list {
+    display: none;
+  }
+
+  .layout.show-list .pane-list {
+    display: block;
+  }
+
+  .layout.show-list .pane-reader {
+    display: none;
+  }
+}

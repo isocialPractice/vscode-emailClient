@@ -1,0 +1,23 @@
+{
+ "example": {
+  "extract-email": {
+    "imap": {
+      "user": "jane.doe@example.com",
+      "password": "app-password-here",
+      "host": "imap.example.com",
+      "port": 993,
+      "tls": true,
+      "authTimeout": 3000
+    }
+  },
+  "send-email": {
+    "host": "smtp.example.com",
+    "port": 587,
+    "secure": false,
+    "auth": {
+      "user": "jane.doe@example.com",
+      "pass": "app-password-here"
+    }
+  }
+ }
+}
