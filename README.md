@@ -1,5 +1,7 @@
 # Email Client for VS Code
 
+- `Ctrl + click` to view [full documentation](https://isocialpractice.github.io/vscode-emailClient/)
+
 Read, preview, compose, and send email without leaving VS Code. The extension
 bridges globally installed `extractemail` and `sendemail` CLI tools behind a
 single three-pane mail interface, and ships a built-in **mock email server**
