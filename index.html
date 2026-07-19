@@ -1,0 +1,566 @@
+<html lang="en">
+<head>
+ <link rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.8.1/github-markdown.min.css"
+  crossorigin="anonymous" referrerpolicy="no-referrer"/>
+ <title>Documentation</title>
+ <link rel="icon" href="favicon.png">
+ <meta name="color-scheme" content="light">
+
+ <style>
+  /* Force light mode for all components */
+  :root {
+   color-scheme: light;
+  }
+
+  /* Override GitHub Markdown CSS to always use light mode */
+  @media (prefers-color-scheme: dark) {
+   .markdown-body,
+   .markdown-body * {
+    color-scheme: light !important;
+   }
+  }
+
+  /* Force light mode styles for markdown content */
+  .markdown-body {
+   background-color: #ffffff !important;
+   color: #1f2328 !important;
+   color-scheme: light !important;
+  }
+
+  /* Page submenu styling to match site design */
+  nav.page-nav {
+   position: fixed;
+   z-index: 100;
+   margin-bottom: 32px;
+   width: 100%;
+   left: 0px;
+   top: 0px;
+   background: linear-gradient(135deg, rgb(27, 45, 45) 0%, black 100%);
+   border-bottom: 2px solid #E1E4E8;
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  nav.page-nav .nav-container {
+   max-width: 1400px;
+   margin: 0 auto;
+   padding: 0 24px;
+  }
+
+  .page-menu {
+   display: flex;
+   list-style: none;
+   gap: 8px;
+   margin: 0;
+   padding: 12px 0;
+   flex-wrap: wrap;
+  }
+
+  nav.page-nav div ul li {
+   margin-left: 20px;
+  }
+
+  .page-link {
+   display: inline-block;
+   padding: 8px 16px;
+   color: #f0f1f3;
+   text-decoration: none;
+   font-size: 14px;
+   font-weight: 500;
+   border-radius: 8px;
+   transition: all 0.2s ease;
+   border: 1px solid transparent;
+  }
+
+  .page-link:hover {
+   color: darkslategray;
+   background: rgba(245, 245, 245, 0.8);
+   border-color: rgba(0, 102, 204, 0.2);
+  }
+
+  .page-link.active {
+   color: darkslategray;
+   background: #f1f1f2;
+   font-weight: 600;
+   border-color: darkslategray;
+   box-shadow: 0 2px 4px rgba(0, 102, 204, 0.1);
+  }
+
+  /* Content container styling */
+  #content {
+   max-width: 1200px;
+   margin: 40px auto;
+   padding: 32px 24px;
+   background: #ffffff;
+   border-radius: 12px;
+   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  /* Additional markdown overrides for tables, code blocks, etc. */
+  .markdown-body table tr {
+   background-color: #ffffff !important;
+   border-top: 1px solid #d1d9e0 !important;
+  }
+
+  .markdown-body table tr:nth-child(2n) {
+   background-color: #f6f8fa !important;
+  }
+
+  .markdown-body code {
+   background-color: rgba(175, 184, 193, 0.2) !important;
+   color: #1f2328 !important;
+  }
+
+  .markdown-body pre {
+   background-color: #f6f8fa !important;
+  }
+
+  .markdown-body pre code {
+   background-color: transparent !important;
+   color: #1f2328 !important;
+  }
+ </style>
+
+ <script>
+  // docPages
+  // Documentation menu items (do not include 'Home' - it's added automatically), and
+  // default base url.
+
+  // Menu items used to parse data from documentation folder.
+  const docPages = ["ACCOUNTS", "ARCHITECTURE", "COMMANDS", "CONFIGURATION", "MOCK-SERVER", "PORTING", "TESTING", "../QUICKSTART", "../CHANGELOG"];
+  // Documentation folder.
+  const docRoot = "docs";
+  // Branch where pages is deployed.
+  const repoBranch = "main";
+
+  // GitHub username.
+  const defaultUserName = `jhauga`;
+  // GitHub repo name.
+  const defaultRepoName = `markedPages`;
+  // Raw content path to repo branch where pages is deployed.
+  const defaultBaseUrl = `https://raw.githubusercontent.com/${defaultUserName}/${defaultRepoName}/refs/heads/${repoBranch}/`;
+ </script>
+</head>
+
+<body>
+
+ <!-- Holds the raw parsed markdown, removing it from display. -->
+ <textarea id="markdown-source" style="display: none;"></textarea>
+
+ <!-- Where the markdown converted to html will be parsed and rendered  -->
+ <div style="margin-top: 100px" id="content" class="markdown-body"></div>
+
+ <!-- Use `marked` for converting markdown to html -->
+ <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
+
+ <!-- Create menu for documentation, and define global variables. -->
+ <script>
+  // embeddedScript
+  // Use the variable `docPages` defined in head html element to create menu, and define
+  // or use defaults for global variables.
+
+  // Global variables
+  const content = document.getElementById("content");
+
+  function createDocPageMenu() {
+   let nav = document.createElement('nav');
+   nav.className = 'page-nav';
+
+   let navContainer = document.createElement('div');
+   navContainer.className = 'nav-container';
+
+   let pageMenu = document.createElement('ul');
+   pageMenu.className = 'page-menu';
+   pageMenu.id = 'docs-menu';
+
+   // Helper function to convert to camelCase
+   var toCamelCase = (str) => {
+    return str.replace(/(?:^\w|[A-Z]|\b\w)/g, (letter, index) => {
+     return index === 0 ? letter.toLowerCase() : letter.toUpperCase();
+    }).replace(/\s+/g, '');
+   };
+
+   // Generate file path for a page name by trying different naming conventions
+   var resolveFilePath = (pageName) => {
+    // Try different naming conventions, prioritizing lowercase with hyphens
+    let conventions = [
+     // Spaces to hyphens (most common)
+     { name: pageName.replace(/\s+/g, '-'), cases: ['lower', 'upper', 'camel'] },
+     // camelCase
+     { name: toCamelCase(pageName), cases: ['same', 'lower', 'upper'] },
+     // Spaces to underscores
+     { name: pageName.replace(/\s+/g, '_'), cases: ['lower', 'upper', 'camel'] }
+    ];
+
+    // Build array of all possible filenames to try
+    let possibleFiles = [];
+    conventions.forEach(conv => {
+     conv.cases.forEach(caseType => {
+      let fileName;
+      if (caseType === 'upper') {
+       fileName = conv.name.toUpperCase();
+      } else if (caseType === 'lower') {
+       fileName = conv.name.toLowerCase();
+      } else if (caseType === 'camel') {
+       fileName = toCamelCase(conv.name);
+      } else {
+       fileName = conv.name;
+      }
+      possibleFiles.push(fileName + '.md');
+     });
+    });
+
+    // Return all possible files for fallback attempts
+    return possibleFiles;
+   }
+
+   // Create Home link first (always active by default)
+   let homeLi = document.createElement('li');
+   let homeLink = document.createElement('a');
+   homeLink.href = '#';
+   homeLink.className = 'page-link active';
+   homeLink.setAttribute('data-file', '../README.md');
+   homeLink.textContent = 'Home';
+   homeLi.appendChild(homeLink);
+   pageMenu.appendChild(homeLi);
+
+   // Create links for each page in docPages array
+   docPages.forEach((pageName) => {
+    const li = document.createElement('li');
+    const link = document.createElement('a');
+    link.href = '#';
+    link.className = 'page-link';
+    const possibleFiles = resolveFilePath(pageName);
+    link.setAttribute('data-file', possibleFiles[0]);
+    link.setAttribute('data-page-name', pageName);
+    link.setAttribute('data-file-attempts', JSON.stringify(possibleFiles));
+    link.textContent = pageName.replace(/\.{1,}\//gim, "");
+    li.appendChild(link);
+    pageMenu.appendChild(li);
+   });
+
+   navContainer.appendChild(pageMenu);
+   nav.appendChild(navContainer);
+
+   // Insert navigation before the content div
+   content.parentNode.insertBefore(nav, content);
+  }
+
+  // Create menu when DOM is loaded
+  if (document.readyState === 'loading') {
+   document.addEventListener('DOMContentLoaded', createDocPageMenu);
+  } else {
+   createDocPageMenu();
+  }
+ </script>
+
+ <!-- Load markdown, converting it to html using `marked`. -->
+ <script>
+  // embeddedScript
+  // Load markdown file and render it.
+
+  var baseUrl, username, repoName; /* defined in function */
+  function loadMarkdown(file, pageLink) {
+   if (pageLink == undefined) pageLink = 0;
+
+   if (window.location.href.indexOf('localhost') > -1) {
+    baseUrl = '/';
+   } else {
+    // Extract GitHub username and repo from current URL
+    let urlParts = window.location.href.match(/github\.io\/([^\/]+)/);
+    if (urlParts) {
+     repoName = urlParts[1];
+     // Get username from hostname
+     username = window.location.hostname.split('.')[0];
+     baseUrl = `https://raw.githubusercontent.com/${username}/${repoName}/refs/heads/${repoBranch}/`;
+    } else {
+     // Fallback to default if pattern doesn't match
+     baseUrl = defaultBaseUrl;
+     username = defaultUserName;
+     repoName = defaultRepoName;
+    }
+   }
+
+   let fileUrl;
+   if (pageLink == 0) {
+    fileUrl = /* full path with configed globals */
+     file.startsWith('../') ? baseUrl + file.substring(3) : `${baseUrl}${docRoot}/${file}`;
+   } else {
+    fileUrl = file; /* path from url */
+   }
+
+   let xhttp = new XMLHttpRequest();
+   // IMPORTANT - this cannot be used as an arrow function
+   xhttp.onreadystatechange = function() {
+    if (this.readyState == 4) {
+     if (this.status == 200) {
+      let data = this.responseText;
+      let markdownSource = document.getElementById('markdown-source');
+      markdownSource.value = data;
+
+      // Parse and render markdown
+      content.innerHTML = marked.parse(data);
+
+      // Convert links to markdown files to parsable data
+      let aTags = document.getElementsByTagName("a");
+      for (let i = 0; i < aTags.length; i++) {
+       if (aTags[i].hasAttribute("href")) {
+        let href = aTags[i].getAttribute("href");
+        // Check if href is a markdown file (.md extension)
+        if (href.endsWith('.md')) {
+         // Convert link to onclick handler that loads markdown
+         aTags[i].style.cursor = 'pointer';
+         aTags[i].addEventListener("click", function(e) {
+          e.preventDefault();
+          
+          // Extract base filename from href (remove path and normalize)
+          let hrefFileName = href.split('/').pop().toLowerCase();
+          let hrefBaseName = hrefFileName.replace('.md', '');
+          
+          // Check if this matches a menu item
+          let menuLinks = document.querySelectorAll('.page-link');
+          let matchedLink = null;
+          
+          menuLinks.forEach(l => {
+           // Check against all possible file name attempts
+           if (l.hasAttribute('data-file-attempts')) {
+            let attempts = JSON.parse(l.getAttribute('data-file-attempts'));
+            let attemptMatch = attempts.some(attempt => {
+             let attemptBase = attempt.toLowerCase().replace('.md', '');
+             attemptBase = attemptBase.replace('../', '');
+             return attemptBase === hrefBaseName || attempt.toLowerCase() === hrefFileName;
+            });
+            if (attemptMatch) {
+             matchedLink = l;
+            }
+           } else {
+            // For Home link (README.md), check directly
+            let dataFile = l.getAttribute('data-file');
+            if (dataFile) {
+             let dataFileName = dataFile.split('/').pop().toLowerCase();
+             if (dataFileName === hrefFileName || dataFile.toLowerCase().includes(hrefFileName)) {
+              matchedLink = l;
+             }
+            }
+           }
+          });
+          
+          // If we found a matching menu item, click it to activate and load
+          if (matchedLink) {
+           menuLinks.forEach(l => l.classList.remove('active'));
+           matchedLink.classList.add('active');
+           let menuFile = matchedLink.getAttribute('data-file');
+           loadMarkdown(menuFile);
+          } else {
+           // No menu match - just load the file directly
+           menuLinks.forEach(l => l.classList.remove('active'));
+           loadMarkdown(href, 1);
+          }
+         });
+         // null the href to prevent default navigation
+         aTags[i].setAttribute("href", "javascript:void(0)");
+        }
+       }
+      }
+     } else if (this.status == 404) {
+      // Try fallback file names if available
+      let activeLink = document.querySelector('.page-link.active');
+      if (activeLink && activeLink.hasAttribute('data-file-attempts')) {
+       let attempts = JSON.parse(activeLink.getAttribute('data-file-attempts'));
+       let currentAttemptIndex = attempts.indexOf(file);
+
+       if (currentAttemptIndex > -1 && currentAttemptIndex < attempts.length - 1) {
+        // Try next file name variation
+        let nextFile = attempts[currentAttemptIndex + 1];
+        loadMarkdown(nextFile);
+       } else {
+        console.error(`Could not find file for: ${activeLink.getAttribute('data-page-name')}. Tried:`, attempts);
+       }
+      }
+     }
+    }
+   };
+   xhttp.open('GET', fileUrl, true);
+   xhttp.send();
+  }
+
+  // Set up menu click handlers
+  document.addEventListener('DOMContentLoaded', function() {
+   let menuLinks = document.querySelectorAll('.page-link');
+
+   menuLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+    e.preventDefault();
+
+    // Remove active class from all links
+    menuLinks.forEach(l => l.classList.remove('active'));
+
+    // Add active class to clicked link
+    this.classList.add('active');
+
+    // Load the markdown file
+    let file = this.getAttribute('data-file');
+    loadMarkdown(file);
+    });
+   });
+
+   // Load default file (README.md)
+   loadMarkdown('../README.md');
+  });
+ </script>
+
+ <!-- Add anchor links to current parsed markdown. -->
+ <script>
+  // embeddedScript
+  // Add id for anchor links to the parsed markdown.
+  // This function generates GitHub-style anchor IDs for all headings
+  function addAnchorLinksToHeadings() {
+   // Select all heading elements (h1 through h6)
+   const headings = document.querySelectorAll('.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6');
+   
+   headings.forEach(heading => {
+    // Get the text content of the heading
+    const headingText = heading.textContent.trim();
+    
+    // Generate GitHub-style ID: lowercase, replace spaces with hyphens, remove special characters
+    const anchorId = headingText
+     .toLowerCase()
+     .replace(/\s+/g, '-')           // Replace spaces with hyphens
+     .replace(/[^\w\-]/g, '');       // Remove non-word characters except hyphens
+    
+    // Set the id attribute
+    heading.setAttribute('id', anchorId);
+   });
+  }
+  
+  // Create a MutationObserver to watch for content changes
+  const contentObserver = new MutationObserver((mutations) => {
+   mutations.forEach((mutation) => {
+    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+     // Content has been updated, add anchor links
+     addAnchorLinksToHeadings();
+    }
+   });
+  });
+  
+  // Start observing the content div for changes
+  document.addEventListener('DOMContentLoaded', function() {
+   const contentDiv = document.getElementById('content');
+   if (contentDiv) {
+    contentObserver.observe(contentDiv, { childList: true, subtree: false });
+    // Also run once on load in case content is already there
+    addAnchorLinksToHeadings();
+   }
+  });
+ </script>
+
+ <!-- For debugging, assuming localhost will be used before pushing to GitHub. -->
+ <script>
+   // embeddedScript
+   // Debugging tool to adjust root link per localhost test, and github pages.
+
+   var href = location.href;
+   var pgHref = document.querySelectorAll("[href], [src]");
+   if (href.indexOf("localhost") > -1) {
+    let pgHrefLen = pgHref.length;
+    for (i = 0; i < pgHrefLen; i++) {
+     let curVal;
+     if (pgHref[i].hasAttribute("href")) {
+      curVal = pgHref[i].getAttribute("href");
+      pgHref[i].setAttribute("href", curVal.replace(`https://${username}.github.io/${repoName}`, ""));
+     }
+     if (pgHref[i].hasAttribute("src")) {
+      curVal = pgHref[i].getAttribute("src");
+      pgHref[i].setAttribute("src", curVal.replace(`https://${username}.github.io/${repoName}`, ""));
+     }
+    }
+   }
+
+   // Use a blank favicon if one was not found
+   (function() {
+    // Check if favicon link exists in head
+    let faviconLink = document.querySelector('link[rel*="icon"]');
+
+    if (!faviconLink) {
+     // No favicon exists, create one with white circle SVG
+     faviconLink = document.createElement('link');
+     faviconLink.rel = 'icon';
+     faviconLink.type = 'image/svg+xml';
+
+     // Create SVG data URI for a solid white circle
+     let svgCircle = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="white"/></svg>';
+     faviconLink.href = 'data:image/svg+xml,' + encodeURIComponent(svgCircle);
+
+     document.head.appendChild(faviconLink);
+    } else {
+     // Favicon link exists, check if it loads successfully
+     let testImg = new Image();
+     testImg.onerror = () => {
+      // Favicon failed to load (404 or error), replace with white circle SVG
+      let svgCircle = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="white"/></svg>';
+      faviconLink.href = 'data:image/svg+xml,' + encodeURIComponent(svgCircle);
+     };
+     testImg.src = faviconLink.href;
+    }
+   })();
+ </script>
+
+ <!-- User scripts -->
+ <script id="userScripts">
+  // userScripts
+  // Scripts to add on an as needed basis.
+
+ </script>
+
+</body>
+</html>
+
+<!-- Error Check -->
+<script>
+ // errorCheck
+ // Check for console errors, and output results for easier debuggin.
+
+ // Get completion time.
+ var timeToParse = 0, errorLength = 0;
+ function completionTime() {
+  setTimeout(() => {
+   timeToParse++;
+   if (timeToParse <= 1999) {
+    if (content.innerText.length > 0) {
+     let skip;         // markdown parsed - no nothing
+    } else {
+     completionTime(); // recurse to get time
+    }
+   } else {
+    timeToParse = false;
+    errorLength++;
+   }
+  }, 1);
+ }
+ completionTime(); // get parse time
+ // Check user scripts.
+ let checkUserScriptUse = `
+  // userScripts
+  // Scripts to add on an as needed basis.
+
+ `;
+ let userScripts    = document.getElementById("userScripts");
+ let userScriptData = userScripts.textContent;
+
+ // Output markdown parsing results.
+ console.log(`All markedPages scripts complete with:`);
+ setTimeout(() => {
+  // check if all menu items parsed
+  let nav = document.getElementsByClassName("page-nav");
+  let navLi = nav[0].getElementsByTagName("li");
+  if (Number(docPages.length + 1) != navLi.length) errorLength++;
+  if (userScriptData == checkUserScriptUse) console.log("user scripts: not used");
+  else console.log("user scripts: used");
+  if (content && content.textContent.length > 0) console.log("markdown parsed: ok");
+  else if (content) { console.log("markdown parsed: fail"); errorLength++; }
+  else { console.log("mardown parsed: unknown"); errorLength++; }
+  console.log("time to parse:", timeToParse, "milliseconds");
+  console.log("errors:", errorLength);
+ }, 2000); // wait 2 second
+
+</script>

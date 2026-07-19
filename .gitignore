@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.vsix
+.tmp/
+*.log
+settings/
+send-email/
+extract-email/
+accounts/
+temp-copy-pasted/
