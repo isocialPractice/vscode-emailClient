@@ -61,6 +61,7 @@ files, and deletions apply to a running client immediately.
 | `extractEmailPath` | string | live | Local extract-email installation. Leave empty when `extractemail` is on `PATH`. |
 | `sendEmailPath` | string | live | Local send-email installation. Leave empty when `sendemail` is on `PATH`. |
 | `toolAccount` | string | live | Account name configured inside those tools. |
+| `folders` | string[] | live | Extra IMAP folders (besides Inbox) listed as mailboxes, e.g. `["Sent", "Trash"]`. |
 | `messageLimit` | number | both | Per-account override of `emailClient.messageLimit` (1-500). |
 
 ## Settings reference
@@ -121,6 +122,17 @@ when `sendemail` is on `PATH` (installed globally via
 Account name for the flat-settings live backend (no registry account active).
 Passed as `--config=<name>` to `extractemail` and as `--account <name>` to
 `sendemail`.
+
+### `emailClient.folders`
+
+- Type: `string[]` - Default: `[]`
+
+Extra IMAP folders (besides Inbox) shown as mailboxes for the flat-settings
+live backend, e.g. `["Sent", "Trash"]`. When an account profile or account
+file is active, its own `folders` list applies instead. Each folder is read
+with `extractemail --check "<folder>"`; the name must exist on the server
+(matching is case-insensitive) and its messages load the first time the
+folder is opened.
 
 ### `emailClient.messageLimit`
 

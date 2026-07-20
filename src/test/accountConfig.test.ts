@@ -169,3 +169,73 @@ describe('capabilityLabel', () => {
     assert.equal(capabilityLabel('send-only'), 'send only');
   });
 });
+
+describe('account folders', () => {
+  function withFolders(name: string, folders: unknown) {
+    const file = oneStop(name) as Record<string, Record<string, unknown>>;
+    file[name].folders = folders;
+    return file;
+  }
+
+  it('reads a folders array, trimming entries', () => {
+    write(ACCOUNTS_DIR, 'work.json', withFolders('work', [' Sent ', 'Archive']));
+    const { accounts, warnings } = loadAccountConfigsFromRoot(root);
+    assert.equal(warnings.length, 0);
+    assert.deepEqual(accounts[0].folders, ['Sent', 'Archive']);
+  });
+
+  it('drops the inbox, duplicates, and empty entries', () => {
+    write(ACCOUNTS_DIR, 'work.json', withFolders('work', ['Inbox', 'Sent', 'sent', '', '  ']));
+    const { accounts } = loadAccountConfigsFromRoot(root);
+    assert.deepEqual(accounts[0].folders, ['Sent']);
+  });
+
+  it('omits folders entirely when the file has none', () => {
+    write(ACCOUNTS_DIR, 'work.json', oneStop('work'));
+    const { accounts } = loadAccountConfigsFromRoot(root);
+    assert.equal(accounts[0].folders, undefined);
+  });
+
+  it('warns and ignores a non-array folders value', () => {
+    write(ACCOUNTS_DIR, 'work.json', withFolders('work', 'Sent'));
+    const { accounts, warnings } = loadAccountConfigsFromRoot(root);
+    assert.equal(accounts[0].folders, undefined);
+    assert.ok(warnings.some((w) => /"folders" must be an array/.test(w)));
+  });
+
+  it('warns on non-string entries but keeps the valid ones', () => {
+    write(ACCOUNTS_DIR, 'work.json', withFolders('work', ['Sent', 42]));
+    const { accounts, warnings } = loadAccountConfigsFromRoot(root);
+    assert.deepEqual(accounts[0].folders, ['Sent']);
+    assert.ok(warnings.some((w) => /entries must be strings/.test(w)));
+  });
+});
+
+describe('account folders in nested locations', () => {
+  it('reads folders from inside the extract-email block', () => {
+    const file = oneStop('work') as Record<string, Record<string, any>>;
+    file.work['extract-email'].folders = ['Sent', 'Archive'];
+    write(ACCOUNTS_DIR, 'work.json', file);
+    const { accounts, warnings } = loadAccountConfigsFromRoot(root);
+    assert.equal(warnings.length, 0);
+    assert.deepEqual(accounts[0].folders, ['Sent', 'Archive']);
+  });
+
+  it('reads folders from inside the imap block', () => {
+    const file = oneStop('work') as Record<string, Record<string, any>>;
+    file.work['extract-email'].imap.folders = ['Archive', 'Trash', 'Sent', 'afterRepoTests'];
+    write(ACCOUNTS_DIR, 'work.json', file);
+    const { accounts, warnings } = loadAccountConfigsFromRoot(root);
+    assert.equal(warnings.length, 0);
+    assert.deepEqual(accounts[0].folders, ['Archive', 'Trash', 'Sent', 'afterRepoTests']);
+  });
+
+  it('prefers the master-level list when more than one location is set', () => {
+    const file = oneStop('work') as Record<string, Record<string, any>>;
+    file.work.folders = ['Sent'];
+    file.work['extract-email'].imap.folders = ['Archive'];
+    write(ACCOUNTS_DIR, 'work.json', file);
+    const { accounts } = loadAccountConfigsFromRoot(root);
+    assert.deepEqual(accounts[0].folders, ['Sent']);
+  });
+});

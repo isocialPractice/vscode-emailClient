@@ -46,6 +46,8 @@ export interface ResolvedAccount {
   capability: AccountCapability;
   /** Identity address for display, when one could be determined. */
   email?: string;
+  /** Extra IMAP folders (besides Inbox) shown for this account. */
+  folders?: string[];
   /** Registry root this account was found under. */
   root: string;
   /** Every file that defines this account. */
@@ -158,6 +160,16 @@ export function loadAccountConfigsFromRoot(
     }
     email = identityFromBlocks(extractBlock, sendBlock);
 
+    // The documented spot for "folders" is the master level, but accept it
+    // inside the extract-email block or its imap block too - that is where
+    // hand-edited files tend to put it, next to the connection it belongs to.
+    const imapBlock = extractBlock ? objectField(extractBlock, 'imap') : undefined;
+    const folders = normalizeFolders(
+      body.folders ?? extractBlock?.folders ?? imapBlock?.folders,
+      warnings,
+      `${ACCOUNTS_DIR}/${path.basename(master.filePath)}`
+    );
+
     const capability = capabilityOf(extract, send);
     if (!capability) {
       continue;
@@ -167,10 +179,49 @@ export function loadAccountConfigsFromRoot(
       continue;
     }
 
-    accounts.push({ name, capability, email, root, files: [master.filePath], editable: true, extract, send });
+    accounts.push({ name, capability, email, folders, root, files: [master.filePath], editable: true, extract, send });
   }
 
   return { accounts, warnings };
+}
+
+/**
+ * Normalize a user-supplied folder list: strings only, trimmed, deduplicated
+ * case-insensitively, and never containing the inbox (it is always shown).
+ * Returns undefined when nothing valid remains, so callers can omit the
+ * property entirely.
+ */
+export function normalizeFolders(
+  value: unknown,
+  warnings: string[],
+  origin: string
+): string[] | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  if (!Array.isArray(value)) {
+    warnings.push(`${origin}: "folders" must be an array of folder names; value ignored.`);
+    return undefined;
+  }
+  const seen = new Set<string>();
+  const folders: string[] = [];
+  for (const entry of value) {
+    if (typeof entry !== 'string') {
+      warnings.push(`${origin}: "folders" entries must be strings; entry ignored.`);
+      continue;
+    }
+    const name = entry.trim();
+    if (!name) {
+      continue;
+    }
+    const key = name.toLowerCase();
+    if (key === 'inbox' || seen.has(key)) {
+      continue; // Inbox is always listed; duplicates add nothing.
+    }
+    seen.add(key);
+    folders.push(name);
+  }
+  return folders.length > 0 ? folders : undefined;
 }
 
 export function capabilityLabel(capability: AccountCapability): string {

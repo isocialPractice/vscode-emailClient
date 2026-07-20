@@ -235,7 +235,18 @@
     const imapUser = textField('User', imap.user || '', 'jane.doe@example.com');
     const imapPass = passwordField('Password', imap.password || '');
     const imapTls = checkboxField('Use TLS', imap.tls !== false);
-    extractSet.append(imapRow, imapUser.wrapper, imapPass.wrapper, imapTls.wrapper);
+    const foldersField = textField(
+      'Folders (besides Inbox, comma-separated)',
+      (input.folders || []).join(', '),
+      'Sent, Drafts, Trash'
+    );
+    extractSet.append(
+      imapRow,
+      imapUser.wrapper,
+      imapPass.wrapper,
+      imapTls.wrapper,
+      foldersField.wrapper
+    );
     body.append(extractSet);
 
     // Sending fieldset
@@ -278,9 +289,14 @@
 
     function submit() {
       const capability = capSelect.value;
+      const folders = foldersField.input.value
+        .split(',')
+        .map((name) => name.trim())
+        .filter(Boolean);
       const payload = {
         name: nameField.input.value.trim(),
         capability: capability,
+        folders: capability === 'send-only' || folders.length === 0 ? undefined : folders,
         imap:
           capability === 'send-only'
             ? undefined

@@ -111,3 +111,68 @@ describe('unconfigured live accounts', () => {
     );
   });
 });
+
+describe('account folders', () => {
+  it('infers roles from common folder names', async () => {
+    const { folderRole } = await import('../services/liveBackend');
+    assert.equal(folderRole('Sent'), 'sent');
+    assert.equal(folderRole('Sent Items'), 'sent');
+    assert.equal(folderRole('sent mail'), 'sent');
+    assert.equal(folderRole('Drafts'), 'drafts');
+    assert.equal(folderRole('Trash'), 'trash');
+    assert.equal(folderRole('Deleted Items'), 'trash');
+    assert.equal(folderRole('Bin'), 'trash');
+    assert.equal(folderRole('Archive'), 'archive');
+    assert.equal(folderRole('All Mail'), 'archive');
+    assert.equal(folderRole('Receipts'), 'custom');
+  });
+
+  it('keeps a send-only account to its placeholder inbox even with folders', async () => {
+    const backend = new LiveBackend({
+      extractEmailPath: '',
+      sendEmailPath: MISSING_TOOL,
+      folders: ['Sent', 'Trash'],
+      messageLimit: 50,
+    });
+    const mailboxes = await backend.listMailboxes();
+    assert.equal(mailboxes.length, 1);
+    assert.equal(mailboxes[0].role, 'inbox');
+  });
+
+  it('returns nothing for an unknown mailbox id without spawning the CLI', async () => {
+    const backend = new LiveBackend({
+      extractEmailPath: MISSING_TOOL,
+      sendEmailPath: '',
+      capability: 'extract-only',
+      folders: ['Sent'],
+      messageLimit: 50,
+    });
+    assert.deepEqual(await backend.listMessages('folder:nonexistent'), []);
+  });
+
+  it('routes a known folder mailbox to extraction (failing clearly without the tool)', async () => {
+    const backend = new LiveBackend({
+      extractEmailPath: MISSING_TOOL,
+      sendEmailPath: '',
+      capability: 'extract-only',
+      folders: ['Sent'],
+      messageLimit: 50,
+    });
+    await assert.rejects(
+      () => backend.listMessages('folder:sent'),
+      /exited with code|ENOENT|not/
+    );
+  });
+
+  it('treats deletion inside a trash folder as session-local (no CLI call)', async () => {
+    const backend = new LiveBackend({
+      extractEmailPath: MISSING_TOOL,
+      sendEmailPath: '',
+      capability: 'extract-only',
+      folders: ['Trash'],
+      messageLimit: 50,
+    });
+    // Resolves without touching the missing tool: trash deletions are local.
+    await backend.deleteMessage('folder:trash', 'live-0-2026-01-01');
+  });
+});

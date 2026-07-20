@@ -20,6 +20,7 @@ import {
   EXTRACT_BLOCK,
   ResolvedAccount,
   SEND_BLOCK,
+  normalizeFolders,
 } from './accountConfig';
 
 /** Connection fields the editor collects for the extraction side. */
@@ -46,6 +47,8 @@ export interface AccountInput {
   capability: AccountCapability;
   imap?: ImapInput;
   smtp?: SmtpInput;
+  /** Extra IMAP folders (besides Inbox) to list for this account. */
+  folders?: string[];
 }
 
 /** Account names become file names, so keep them filesystem-safe. */
@@ -92,6 +95,14 @@ export function saveAccount(
   if (Object.keys(body).length === 0) {
     throw new Error('An account must configure extraction, sending, or both.');
   }
+  // Folders only matter when the account can extract; a send-only account
+  // has no folder list to read.
+  if (input.capability !== 'send-only') {
+    const folders = normalizeFolders(input.folders, [], `${ACCOUNTS_DIR}/${name}.json`);
+    if (folders) {
+      body.folders = folders;
+    }
+  }
 
   const filePath = accountFilePath(root, name);
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -131,6 +142,7 @@ export function toAccountInput(account: ResolvedAccount): AccountInput {
   return {
     name: account.name,
     capability: account.capability,
+    folders: account.folders,
     imap: {
       host: readString(imapBlock, 'host'),
       port: readNumber(imapBlock, 'port'),

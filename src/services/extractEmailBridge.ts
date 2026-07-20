@@ -16,6 +16,11 @@ import { spawn } from 'child_process';
 import { EmailAddress, EmailMessage } from '../types';
 import { parseAddressList } from '../utils/address';
 
+/** CLI arguments selecting a non-default IMAP folder, when one is given. */
+function folderArgs(folder?: string): string[] {
+  return folder ? ['--check', folder] : [];
+}
+
 export class ExtractEmailBridge {
   /**
    * @param toolRoot Folder containing a built extract-email installation.
@@ -27,21 +32,28 @@ export class ExtractEmailBridge {
     private readonly account?: string
   ) {}
 
-  /** Fetch the latest `count` messages from the configured IMAP account. */
-  async fetchLatest(count: number): Promise<EmailMessage[]> {
+  /**
+   * Fetch the latest `count` messages from the configured IMAP account.
+   * When `folder` is given the CLI reads that IMAP folder via `--check`
+   * instead of the default INBOX.
+   */
+  async fetchLatest(count: number, folder?: string): Promise<EmailMessage[]> {
     if (this.toolRoot) {
       const entry = path.join(this.toolRoot, 'dist', 'extractEmail.js');
       if (!fs.existsSync(entry)) {
         throw new Error(
           `extract-email CLI not found at ${entry}. ` +
-            'Build the installation first (run its "npm run build").' 
+            'Build the installation first (run its "npm run build").'
         );
       }
     }
 
     // Count is a positional argument; passing --json consumed it as the flag's
     // value and caused the tool to return only 1 (default) message.
-    const { command, args, cwd, shell } = this.buildInvocation([String(count)]);
+    const { command, args, cwd, shell } = this.buildInvocation([
+      ...folderArgs(folder),
+      String(count),
+    ]);
     const stdout = await this.runToFile(command, args, cwd, shell);
     return this.parseRecords(stdout).map((record, index) => this.toMessage(record, index));
   }
@@ -53,7 +65,7 @@ export class ExtractEmailBridge {
    * when the CLI does not support `--number` or the index is out of range;
    * callers fall back to the in-memory cache.
    */
-  async fetchOne(index: number): Promise<EmailMessage | undefined> {
+  async fetchOne(index: number, folder?: string): Promise<EmailMessage | undefined> {
     if (this.toolRoot) {
       const entry = path.join(this.toolRoot, 'dist', 'extractEmail.js');
       if (!fs.existsSync(entry)) {
@@ -61,7 +73,12 @@ export class ExtractEmailBridge {
       }
     }
 
-    const { command, args, cwd, shell } = this.buildInvocation(['-n', String(index + 1), '--html']);
+    const { command, args, cwd, shell } = this.buildInvocation([
+      ...folderArgs(folder),
+      '-n',
+      String(index + 1),
+      '--html',
+    ]);
     try {
       const stdout = await this.runToFile(command, args, cwd, shell);
 
@@ -101,14 +118,20 @@ export class ExtractEmailBridge {
    * Uses `--move trash` which instructs extract-email to IMAP-move the
    * message server-side. Index is 0-based; the CLI flag is 1-based.
    */
-  async moveToTrash(index: number): Promise<void> {
+  async moveToTrash(index: number, folder?: string): Promise<void> {
     if (this.toolRoot) {
       const entry = path.join(this.toolRoot, 'dist', 'extractEmail.js');
       if (!fs.existsSync(entry)) {
         return;
       }
     }
-    const { command, args, cwd, shell } = this.buildInvocation(['-n', String(index + 1), '--move', 'trash']);
+    const { command, args, cwd, shell } = this.buildInvocation([
+      ...folderArgs(folder),
+      '-n',
+      String(index + 1),
+      '--move',
+      'trash',
+    ]);
     try {
       await this.runToFile(command, args, cwd, shell);
     } catch {
@@ -142,9 +165,11 @@ export class ExtractEmailBridge {
     }
 
     // No installation path - fall back to the globally installed command.
+    // With shell:true Node performs no escaping, so quote arguments that
+    // contain whitespace (e.g. folder names like "Sent Items").
     return {
       command: 'extractemail',
-      args: fullArgs,
+      args: fullArgs.map((arg) => (/\s/.test(arg) ? `"${arg.replace(/"/g, '')}"` : arg)),
       cwd: process.cwd(),
       shell: true,
     };

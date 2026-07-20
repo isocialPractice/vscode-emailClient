@@ -171,3 +171,24 @@ describe('accountLabel', () => {
     assert.equal(accountLabel({ id: 'x', backend: 'mock', source: 'settings' }), 'x');
   });
 });
+
+describe('profile folders', () => {
+  it('reads a folders array on a live profile', () => {
+    const { accounts, warnings } = loadAccounts(
+      [{ id: 'work', backend: 'live', folders: ['Sent', 'Trash'] }],
+      []
+    );
+    assert.equal(warnings.length, 0);
+    assert.deepEqual(accounts[0].folders, ['Sent', 'Trash']);
+  });
+
+  it('warns and ignores a non-array folders value but keeps the account', () => {
+    const { accounts, warnings } = loadAccounts(
+      [{ id: 'work', backend: 'live', folders: 'Sent' }],
+      []
+    );
+    assert.equal(accounts.length, 1);
+    assert.equal(accounts[0].folders, undefined);
+    assert.ok(warnings.some((w) => /"folders" must be an array/.test(w)));
+  });
+});

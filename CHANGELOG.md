@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-alpha] - 2026-07-19
+
+### Added
+
+- **Per-account email folders.** Live accounts can declare the IMAP folders
+  to show in the sidebar besides the inbox: a `"folders": ["Sent", "Drafts",
+  "Trash"]` array in `accounts/<name>.json`, a `folders` array on an
+  `emailClient.accounts` profile, or the new flat `emailClient.folders`
+  setting. Each folder is read with `extractemail --check "<folder>"` and
+  its contents load lazily the first time the folder is opened; common
+  names (Sent, Drafts, Trash, Archive, and variants) get their standard
+  mailbox roles. Deleting from a non-trash folder still moves the message
+  server-side to Trash; deleting inside a declared trash folder is
+  session-local, since the CLI has no permanent delete. The Manage Accounts
+  form gained a comma-separated "Folders" field, and account files edited
+  through the form keep their folder list.
+
+### Fixed
+
+- **`folders` is now found in nested account-file locations.** The list was
+  only read at the master level of `accounts/<name>.json`; files that placed
+  it inside the `extract-email` block or its `imap` block were silently
+  ignored, so no folders appeared. All three locations are accepted, with
+  the master level winning when more than one is set.
+
 ## [0.0.0-alpha] - 2026-07-18
 
 ### Changed

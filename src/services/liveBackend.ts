@@ -12,6 +12,13 @@
  * account presents an empty inbox instead of an error, so composing and
  * sending still work - this covers providers whose servers do not allow IMAP
  * extraction but still accept SMTP.
+ *
+ * Folders: besides the inbox, an account may declare extra IMAP folders
+ * (`folders` in its account file or profile). Each one is listed as a
+ * mailbox and read through the CLI's `--check <folder>` option. Folder
+ * contents are fetched lazily the first time the folder is opened, so
+ * listing mailboxes stays a single CLI call; counts for a folder appear
+ * once it has been opened.
  */
 
 import {
@@ -19,6 +26,7 @@ import {
   EmailEnvelope,
   EmailKeywords,
   EmailMessage,
+  MailboxRole,
   MailboxSummary,
   SendOutcome,
 } from '../types';
@@ -41,9 +49,43 @@ export interface LiveBackendOptions {
    * is inferred from which tool paths are set (backward compatible).
    */
   capability?: AccountCapability;
+  /** Extra IMAP folders (besides Inbox) to list as mailboxes. */
+  folders?: string[];
   messageLimit: number;
   /** Display label override, e.g. an account name. */
   label?: string;
+}
+
+/** Sidebar descriptor for one live IMAP folder. */
+interface LiveFolder {
+  id: string;
+  /** Folder name on the IMAP server, passed to `--check`. */
+  name: string;
+  role: MailboxRole;
+  sortOrder: number;
+}
+
+const INBOX_ID = 'inbox';
+
+/**
+ * Infer a JMAP-style mailbox role from a server folder name, so common
+ * folders get their standard sidebar icon and ordering.
+ */
+export function folderRole(name: string): MailboxRole {
+  const key = name.trim().toLowerCase();
+  if (/^sent(\s+(items|mail|messages))?$/.test(key)) {
+    return 'sent';
+  }
+  if (key === 'drafts' || key === 'draft') {
+    return 'drafts';
+  }
+  if (/^(trash|bin|deleted(\s+(items|messages))?)$/.test(key)) {
+    return 'trash';
+  }
+  if (key === 'archive' || key === 'archives' || key === 'all mail') {
+    return 'archive';
+  }
+  return 'custom';
 }
 
 export class LiveBackend implements EmailBackend {
@@ -54,7 +96,9 @@ export class LiveBackend implements EmailBackend {
   private readonly sendBridge?: SendEmailBridge;
   private readonly wantExtract: boolean;
   private readonly wantSend: boolean;
-  private cache: EmailMessage[] | null = null;
+  private readonly folders: LiveFolder[];
+  /** Per-mailbox session caches, keyed by mailbox id. */
+  private readonly caches = new Map<string, EmailMessage[]>();
 
   constructor(private readonly options: LiveBackendOptions) {
     this.wantExtract = options.capability
@@ -83,6 +127,13 @@ export class LiveBackend implements EmailBackend {
       );
     }
 
+    this.folders = (options.folders ?? []).map((name, index) => ({
+      id: `folder:${name.toLowerCase()}`,
+      name,
+      role: folderRole(name),
+      sortOrder: 2 + index,
+    }));
+
     const base = options.label ?? (options.account ? `Live (${options.account})` : 'Live');
     const suffix = this.sendOnly ? ' - send only' : this.extractOnly ? ' - extract only' : '';
     this.label = `${base}${suffix}`;
@@ -98,7 +149,12 @@ export class LiveBackend implements EmailBackend {
     return this.wantExtract && !this.wantSend;
   }
 
-  private async inbox(): Promise<EmailMessage[]> {
+  /** Folder descriptor for a mailbox id; undefined for the inbox or unknown ids. */
+  private folderOf(mailboxId: string): LiveFolder | undefined {
+    return this.folders.find((f) => f.id === mailboxId);
+  }
+
+  private requireBridge(): ExtractEmailBridge {
     if (!this.extractBridge) {
       throw new Error(
         'Live mode extraction is not configured. ' +
@@ -106,15 +162,37 @@ export class LiveBackend implements EmailBackend {
           '(npm install -g extract-email), or check that the account capability is not send-only.'
       );
     }
-    this.cache ??= await this.extractBridge.fetchLatest(this.options.messageLimit);
-    return this.cache;
+    return this.extractBridge;
+  }
+
+  /**
+   * Messages of one mailbox, fetched on first use and cached for the
+   * session. The inbox reads the default INBOX; other mailboxes read
+   * their IMAP folder via `--check`.
+   */
+  private async load(mailboxId: string): Promise<EmailMessage[]> {
+    const cached = this.caches.get(mailboxId);
+    if (cached) {
+      return cached;
+    }
+    const bridge = this.requireBridge();
+    const folder = this.folderOf(mailboxId);
+    if (mailboxId !== INBOX_ID && !folder) {
+      return [];
+    }
+    const fetched = await bridge.fetchLatest(this.options.messageLimit, folder?.name);
+    // The bridge stamps every message with the default inbox id; rewrite it
+    // so ids and lookups stay scoped to the mailbox they came from.
+    const messages = fetched.map((m) => ({ ...m, mailboxId }));
+    this.caches.set(mailboxId, messages);
+    return messages;
   }
 
   async listMailboxes(): Promise<MailboxSummary[]> {
     if (this.sendOnly) {
       return [
         {
-          id: 'inbox',
+          id: INBOX_ID,
           name: 'Inbox (send only)',
           role: 'inbox',
           sortOrder: 1,
@@ -123,61 +201,79 @@ export class LiveBackend implements EmailBackend {
         },
       ];
     }
-    const messages = await this.inbox();
-    return [
+    const inbox = await this.load(INBOX_ID);
+    const summaries: MailboxSummary[] = [
       {
-        id: 'inbox',
+        id: INBOX_ID,
         name: 'Inbox',
         role: 'inbox',
         sortOrder: 1,
-        totalCount: messages.length,
-        unreadCount: messages.filter((m) => !m.keywords.$seen).length,
+        totalCount: inbox.length,
+        unreadCount: inbox.filter((m) => !m.keywords.$seen).length,
       },
     ];
+    for (const folder of this.folders) {
+      // Lazy: folders are not fetched just to show counts. A folder that has
+      // been opened reports its cached counts; others show zero until opened.
+      const cached = this.caches.get(folder.id);
+      summaries.push({
+        id: folder.id,
+        name: folder.name,
+        role: folder.role,
+        sortOrder: folder.sortOrder,
+        totalCount: cached?.length ?? 0,
+        unreadCount: cached ? cached.filter((m) => !m.keywords.$seen).length : 0,
+      });
+    }
+    return summaries;
   }
 
   async listMessages(mailboxId: string, limit = 50): Promise<EmailEnvelope[]> {
-    if (mailboxId !== 'inbox' || this.sendOnly) {
+    if (this.sendOnly) {
       return [];
     }
-    const messages = await this.inbox();
+    if (mailboxId !== INBOX_ID && !this.folderOf(mailboxId)) {
+      return [];
+    }
+    const messages = await this.load(mailboxId);
     return [...messages]
       .sort((a, b) => b.receivedAt.localeCompare(a.receivedAt))
       .slice(0, limit)
       .map(({ bodyValues: _bodyValues, ...envelope }) => envelope);
   }
 
-  async getMessage(_mailboxId: string, messageId: string): Promise<EmailMessage | undefined> {
+  async getMessage(mailboxId: string, messageId: string): Promise<EmailMessage | undefined> {
     if (this.sendOnly) {
       return undefined;
     }
+    const folder = this.folderOf(mailboxId);
     // Lazy-load the full message body on demand. The index is encoded in the
     // message ID as "live-<index>-<date>".
     const indexMatch = /^live-(\d+)-/.exec(messageId);
     if (indexMatch && this.extractBridge) {
       const index = parseInt(indexMatch[1], 10);
-      const full = await this.extractBridge.fetchOne(index);
+      const full = await this.extractBridge.fetchOne(index, folder?.name);
       if (full?.bodyValues?.html || full?.bodyValues?.text) {
         // When --html outputs raw HTML without headers the record lacks From/To.
         // Merge with the cached envelope so the reading pane shows correct metadata.
         if (!full.from?.length) {
-          const messages = await this.inbox();
+          const messages = await this.load(mailboxId);
           const cached = messages.find((m) => m.id === messageId);
           if (cached) {
             return { ...cached, bodyValues: full.bodyValues };
           }
         }
-        return full;
+        return { ...full, mailboxId };
       }
     }
     // Fall back to the in-memory cache when fetching fails or index cannot
     // be parsed from the message ID.
-    const messages = await this.inbox();
+    const messages = await this.load(mailboxId);
     return messages.find((m) => m.id === messageId);
   }
 
   async setKeyword(
-    _mailboxId: string,
+    mailboxId: string,
     messageId: string,
     keyword: keyof EmailKeywords,
     value: boolean
@@ -185,24 +281,43 @@ export class LiveBackend implements EmailBackend {
     if (this.sendOnly) {
       return;
     }
-    const messages = await this.inbox();
+    const messages = await this.load(mailboxId);
     const message = messages.find((m) => m.id === messageId);
     if (message) {
       message.keywords[keyword] = value;
     }
   }
 
-  async deleteMessage(_mailboxId: string, messageId: string): Promise<void> {
+  async deleteMessage(mailboxId: string, messageId: string): Promise<void> {
     if (this.sendOnly) {
+      return;
+    }
+    const folder = this.folderOf(mailboxId);
+    // Messages already in a trash folder cannot be moved to trash again, and
+    // the CLI has no permanent delete, so their removal stays session-local.
+    if (folder?.role === 'trash') {
+      const cached = this.caches.get(mailboxId);
+      if (cached) {
+        this.caches.set(
+          mailboxId,
+          cached.filter((m) => m.id !== messageId)
+        );
+      }
       return;
     }
     // Move the message server-side via the CLI when the bridge supports it.
     const indexMatch = /^live-(\d+)-/.exec(messageId);
     if (indexMatch && this.extractBridge) {
-      await this.extractBridge.moveToTrash(parseInt(indexMatch[1], 10));
+      await this.extractBridge.moveToTrash(parseInt(indexMatch[1], 10), folder?.name);
     }
-    // Always clear the cache so the next inbox() fetch reflects the deletion.
-    this.cache = null;
+    // Drop the source mailbox cache so the next fetch reflects the deletion,
+    // and any cached trash folder so the moved message appears there.
+    this.caches.delete(mailboxId);
+    for (const f of this.folders) {
+      if (f.role === 'trash') {
+        this.caches.delete(f.id);
+      }
+    }
   }
 
   async saveDraft(_draft: ComposeDraft): Promise<string> {
@@ -229,8 +344,8 @@ export class LiveBackend implements EmailBackend {
     if (this.sendOnly) {
       return;
     }
-    this.cache = null;
-    await this.inbox();
+    this.caches.clear();
+    await this.load(INBOX_ID);
   }
 
   async unreadCount(): Promise<number> {
@@ -238,7 +353,7 @@ export class LiveBackend implements EmailBackend {
       return 0;
     }
     try {
-      const messages = await this.inbox();
+      const messages = await this.load(INBOX_ID);
       return messages.filter((m) => !m.keywords.$seen).length;
     } catch {
       return 0;

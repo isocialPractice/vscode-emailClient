@@ -2,7 +2,7 @@
   "name": "vscode-email-client",
   "displayName": "Email Client",
   "description": "Read, preview, compose, and send email inside VS Code. Unifies an IMAP extraction engine and an SMTP sending engine behind a three-pane mail UI, with a built-in mock email server for UI preview, testing, and debugging.",
-  "version": "0.0.0-alpha",
+  "version": "0.1.0-alpha",
   "author": "John Haugabook",
   "publisher": "isocialPractice",
   "icon": "icon.png",
@@ -135,6 +135,13 @@
                 "type": "string",
                 "description": "Account name inside the extract-email / send-email tools."
               },
+              "folders": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Live backend: extra IMAP folders (besides Inbox) to list, e.g. [\"Sent\", \"Trash\"]. Folder names must exist on the server; matching is case-insensitive."
+              },
               "messageLimit": {
                 "type": "number",
                 "description": "Messages loaded per mailbox for this account."
@@ -174,6 +181,14 @@
           "type": "string",
           "default": "",
           "description": "Account name to pass to the live backends (an account configured inside the send-email / extract-email tools). Leave empty to use each tool's default account."
+        },
+        "emailClient.folders": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Live mode with the flat settings: extra IMAP folders (besides Inbox) to list in the sidebar, e.g. [\"Sent\", \"Trash\"]. Account profiles and account files declare their own \"folders\" instead. Folder names must exist on the server; matching is case-insensitive."
         },
         "emailClient.messageLimit": {
           "type": "number",

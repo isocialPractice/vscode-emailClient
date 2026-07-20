@@ -8,7 +8,7 @@ single three-pane mail interface, and ships a built-in **mock email server**
 so the entire UI works out of the box with no account, no credentials, and no
 network access.
 
-> **Status:** `0.0.0-alpha` - early preview. The mock backend is fully
+> **Status:** `0.1.0-alpha` - early preview. The mock backend is fully
 > functional; the live backend is experimental. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Features
@@ -36,6 +36,11 @@ network access.
   No VS Code path settings are required when the tools are on `PATH`.
   Messages are opened with `--html` for full HTML rendering. Deleting a
   message moves it server-side to the Trash folder via `--move trash`.
+- **Per-account folders** - an account can declare the IMAP folders it wants
+  in the sidebar (`"folders": ["Sent", "Drafts", "Trash"]` in its account
+  file, profile, or the flat `emailClient.folders` setting). Each folder is
+  read through `extractemail --check "<folder>"` and loads lazily the first
+  time it is opened.
 - **Safe HTML rendering** - email bodies are sanitized in the extension host
   and rendered under a strict Content-Security-Policy. Scripts never run and
   remote images are blocked by default, matching desktop mail client privacy
@@ -97,6 +102,7 @@ Full details: [docs/COMMANDS.md](docs/COMMANDS.md).
 | `emailClient.extractEmailPath` | `""` | Path to a locally built `extract-email` installation. Leave empty when `extractemail` is on `PATH`. |
 | `emailClient.sendEmailPath` | `""` | Path to a locally built `send-email` installation. Leave empty when `sendemail` is on `PATH`. |
 | `emailClient.account` | `""` | Account name for the flat settings (not the registry). |
+| `emailClient.folders` | `[]` | Extra IMAP folders (besides Inbox) listed in live mode with the flat settings. |
 | `emailClient.messageLimit` | `50` | Messages loaded per mailbox. |
 
 Full details and live-mode setup: [docs/CONFIGURATION.md](docs/CONFIGURATION.md).
@@ -173,10 +179,14 @@ Then create an account in `accounts/<name>.json`:
       "port": 587,
       "secure": false,
       "auth": { "user": "me@example.com", "pass": "app-password" }
-    }
+    },
+    "folders": ["Sent", "Drafts", "Trash"]
   }
 }
 ```
+
+The optional `folders` list adds those IMAP folders to the sidebar next to
+the inbox; leave it out for an inbox-only view.
 
 Or use **Email Client: Create Account File** / **Email Client: Manage Accounts** to
 build this file through a GUI form. Then run **Email Client: Select Account** to
@@ -184,15 +194,19 @@ activate it.
 
 The extension calls `extractemail --config=<name> <limit>` to list messages,
 `extractemail -n <N> --html --config=<name>` to open individual messages in HTML,
-and `extractemail -n <N> --move trash --config=<name>` to delete. Sending calls
+and `extractemail -n <N> --move trash --config=<name>` to delete. Folders other
+than the inbox are read by prepending `--check "<folder>"` to the same calls.
+Sending calls
 `sendemail --send-to <addr> --subject <subject> --message-file <path> --force --account <name>`.
 
 No VS Code path settings are needed when the tools are on `PATH`. Set
 `emailClient.extractEmailPath` or `emailClient.sendEmailPath` only when
 pointing at a non-global local build.
 
-Known alpha limitations: only the inbox is listed, IMAP flag changes other
-than trash-moves are session-local, and drafts require the mock backend. See
+Known alpha limitations: folders must be declared per account (the server's
+folder list is not auto-discovered), folder counts appear after a folder is
+first opened, IMAP flag changes other than trash-moves are session-local,
+and drafts require the mock backend. See
 [docs/PORTING.md](docs/PORTING.md) for the complete feature mapping.
 
 ## Project Layout
@@ -240,7 +254,7 @@ task wired in.
 
 ### Versioning note
 
-The package version `0.0.0-alpha` is a semver prerelease. The VS Code
+The package version `0.1.0-alpha` is a semver prerelease. The VS Code
 Marketplace requires a plain `major.minor.patch` version, so publishing will
 require bumping to (for example) `0.1.0`. Local development and `F5` runs are
 unaffected.

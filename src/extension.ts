@@ -26,6 +26,7 @@ import {
   ResolvedAccount,
   capabilityLabel,
   loadAccountConfigs,
+  normalizeFolders,
 } from './services/accountConfig';
 import { EmailClientPanel } from './panel/emailClientPanel';
 import { AccountsPanel } from './panel/accountsPanel';
@@ -295,6 +296,7 @@ function createBackend(context: vscode.ExtensionContext): EmailBackend {
       extractEmailPath: config.get<string>('extractEmailPath', ''),
       sendEmailPath: config.get<string>('sendEmailPath', ''),
       account: config.get<string>('account', '') || undefined,
+      folders: flatFolders(config),
       messageLimit: config.get<number>('messageLimit', 50),
     });
   }
@@ -312,9 +314,18 @@ function liveBackendFromConfig(
     extractAccount: account.extract?.toolAccount ?? account.name,
     sendAccount: account.send?.toolAccount ?? account.name,
     capability: account.capability,
+    folders: account.folders,
     messageLimit: config.get<number>('messageLimit', 50),
     label: account.name,
   });
+}
+
+/** Extra live-mode folders from the flat `emailClient.folders` setting. */
+function flatFolders(config: vscode.WorkspaceConfiguration): string[] | undefined {
+  const warnings: string[] = [];
+  const folders = normalizeFolders(config.get<unknown>('folders', []), warnings, 'emailClient.folders');
+  surfaceWarnings(warnings);
+  return folders;
 }
 
 function backendFromAccount(
@@ -328,6 +339,7 @@ function backendFromAccount(
       extractEmailPath: account.extractEmailPath ?? '',
       sendEmailPath: account.sendEmailPath ?? '',
       account: account.toolAccount,
+      folders: account.folders,
       messageLimit: account.messageLimit ?? config.get<number>('messageLimit', 50),
       label: `${label} (live)`,
     });

@@ -36,7 +36,8 @@ quickest way to confirm a file is in a location the extension reads.
 
 A file in `accounts/` holds **exactly one top-level property - the master
 property - and it must match the file name**. Inside it, an optional
-`extract-email` block (IMAP) and/or an optional `send-email` block (SMTP):
+`extract-email` block (IMAP), an optional `send-email` block (SMTP), and an
+optional `folders` list:
 
 ```json
 {
@@ -59,7 +60,8 @@ property - and it must match the file name**. Inside it, an optional
         "user": "jane.doe@example.com",
         "pass": "app-password-here"
       }
-    }
+    },
+    "folders": ["Sent", "Drafts", "Trash"]
   }
 }
 ```
@@ -70,6 +72,14 @@ property - and it must match the file name**. Inside it, an optional
   (`host`, `port`, `secure`, `auth`).
 - Include only the `extract-email` block for an extract-only account, or
   only the `send-email` block for a send-only account.
+- `folders` names extra IMAP folders (besides Inbox) shown as mailboxes in
+  the sidebar. Each is read with `extractemail --check "<folder>"`, so the
+  name must exist on the server (matching is case-insensitive; nested paths
+  are searched recursively). Folder contents load the first time the folder
+  is opened. The Manage Accounts form exposes the same list as a
+  comma-separated "Folders" field. The list may also sit inside the
+  `extract-email` block or its `imap` block; when more than one location
+  is set, the master level wins.
 
 ## Rules
 

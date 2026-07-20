@@ -84,6 +84,9 @@ export class EmailClientPanel {
 
         case 'selectMailbox':
           await this.sendMessageList(message.mailboxId);
+          // Live folders load lazily on first open; re-send the mailbox list
+          // so their counts appear once the folder has been fetched.
+          await this.sendMailboxes();
           break;
 
         case 'openMessage': {

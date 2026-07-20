@@ -178,3 +178,42 @@ describe('deleteAccount', () => {
     assert.equal(fs.existsSync(path.join(root, ACCOUNTS_DIR, 'work.json')), false);
   });
 });
+
+describe('account folders round-trip', () => {
+  it('persists normalized folders and reads them back for editing', () => {
+    saveAccount(root, {
+      name: 'work',
+      capability: 'both',
+      imap: { host: 'imap.example.com' },
+      smtp: { host: 'smtp.example.com' },
+      folders: [' Sent ', 'Inbox', 'Trash', 'sent'],
+    });
+    assert.deepEqual(readAccountFile('work').work.folders, ['Sent', 'Trash']);
+    const input = toAccountInput(findAccount('work')!);
+    assert.deepEqual(input.folders, ['Sent', 'Trash']);
+  });
+
+  it('keeps folders across an edit that does not touch them', () => {
+    saveAccount(root, {
+      name: 'work',
+      capability: 'both',
+      imap: { host: 'imap.example.com' },
+      smtp: {},
+      folders: ['Sent'],
+    });
+    const previous = findAccount('work')!;
+    const edited = { ...toAccountInput(previous), smtp: { host: 'smtp.example.com' } };
+    saveAccount(root, mergeSecrets(edited, previous), previous);
+    assert.deepEqual(readAccountFile('work').work.folders, ['Sent']);
+  });
+
+  it('drops folders for a send-only account', () => {
+    saveAccount(root, {
+      name: 'outbound',
+      capability: 'send-only',
+      smtp: { host: 'smtp.example.com' },
+      folders: ['Sent'],
+    });
+    assert.equal(readAccountFile('outbound').outbound.folders, undefined);
+  });
+});

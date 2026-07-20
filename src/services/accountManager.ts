@@ -19,6 +19,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { normalizeFolders } from './accountConfig';
 
 export interface EmailAccountConfig {
   /** Unique id; settings entries declare it, folder files take the file name. */
@@ -35,6 +36,8 @@ export interface EmailAccountConfig {
   sendEmailPath?: string;
   /** Account name understood inside the extract-email / send-email tools. */
   toolAccount?: string;
+  /** Live backend: extra IMAP folders (besides Inbox) to list. */
+  folders?: string[];
   messageLimit?: number;
   /** Where this account was defined. */
   source: 'settings' | 'folder';
@@ -147,6 +150,11 @@ function normalizeAccount(
   str('extractEmailPath');
   str('sendEmailPath');
   str('toolAccount');
+
+  const folders = normalizeFolders(raw.folders, warnings, origin);
+  if (folders) {
+    account.folders = folders;
+  }
 
   const limit = raw.messageLimit;
   if (typeof limit === 'number' && Number.isFinite(limit)) {
